@@ -242,7 +242,7 @@ class App:
             print("Invalid date format!")
             return
 
-        task = Task(task_name, self._users[self._logged_in_user], proj.name, due_date, description)
+        task = Task(task_name, self._users[self._logged_in_user], proj, due_date, description)
         proj.add_task(task)
         print(f"Task '{task_name}' added to project '{proj.name}'.")
 
@@ -388,44 +388,177 @@ class App:
 
         for proj in ns.projects:
             print(proj)
+    def view_user_comments(self):
+        user = self._users.get(self._logged_in_user)
+        if not user or not user.get_comments():
+            print("No comments found.")
+            return
+
+        print("\n--- VIEW COMMENTS ---")
+        print("1. All\n2. By Namespace\n3. By Project\n4. By Task")
+        choice = input("Choose option: ")
+
+        comments = user.get_comments()
+        if choice == '1':
+            for c in comments:
+                print(c)
+        elif choice in ['2', '3', '4']:
+            keyword = input("Enter name to filter: ")
+            for c in comments:
+                if (choice == '2' and keyword in c.task.project) or \
+                (choice == '3' and keyword == c.task.project) or \
+                (choice == '4' and keyword == c.task.name):
+                    print(c)
+    def change_task_status(self):
+        task = self._select_task()
+        if not task:
+            return
+        current_status = task.status
+        if current_status == "To Do":
+            task.update_status("In Progress")
+        elif current_status == "In Progress":
+            task.update_status("Completed")
+        else:
+            print("Task already completed.")
+        print(f"Task status updated to {task.status}.")
+
+    def show_tasks(self):
+        print("\n--- SHOW TASKS ---")
+        print("1. By Namespace\n2. By Project\n3. Missed Tasks")
+        choice = input("Choose option: ")
+
+        namespaces = self._users[self._logged_in_user].get_namespaces()
+        tasks = []
+
+        if choice == '1':
+            ns_name = input("Enter namespace name: ")
+            for ns in namespaces:
+                if ns.name == ns_name:
+                    for proj in ns.projects:
+                        tasks.extend(proj.tasks)
+        elif choice == '2':
+            proj_name = input("Enter project name: ")
+            for ns in namespaces:
+                for proj in ns.projects:
+                    if proj.name == proj_name:
+                        tasks.extend(proj.tasks)
+        elif choice == '3':
+            today = datetime.date.today()
+            for ns in namespaces:
+                for proj in ns.projects:
+                    for task in proj.tasks:
+                        if task.due_date < today and task.status != "Completed":
+                            tasks.append(task)
+
+        if not tasks:
+            print("No tasks found.")
+            return
+
+        print("\nSort by: 1. Name 2. Due Date 3. Priority")
+        sort_choice = input("Choose: ")
+        if sort_choice == '1':
+            tasks.sort(key=lambda t: t.name)
+        elif sort_choice == '2':
+            tasks.sort(key=lambda t: t.due_date)
+        elif sort_choice == '3':
+            priority_order = {"High": 1, "Medium": 2, "Low": 3}
+            tasks.sort(key=lambda t: priority_order[t.priority])
+
+        for t in tasks:
+            print(t)
+
+    def view_user_projects(self):
+        namespaces = self._users[self._logged_in_user].get_namespaces()
+        if not namespaces:
+            print("No namespaces found.")
+            return
+
+        print("\n--- VIEW PROJECTS ---")
+        print("1. All Projects\n2. By Namespace")
+        choice = input("Choose option: ")
+
+        if choice == '1':
+            for ns in namespaces:
+                for proj in ns.projects:
+                    print(proj)
+        elif choice == '2':
+            ns_name = input("Enter namespace name: ")
+            for ns in namespaces:
+                if ns.name == ns_name:
+                    for proj in ns.projects:
+                        print(proj)
 
     def run(self):
         while True:
-            print("\n===== MENU =====")
-            print("1. Signup\n2. Login\n3. View User\n4. Update User\n5. Create Namespace\n6. Add User to Namespace\n"
-                  "7. Add Project to Namespace\n8. Add Task to Project\n9. Assign User to Task\n10. Add Comment to Task\n"
-                  "11. View Namespaces\n12. View Projects\n13. Logout\n0. Exit")
-
+            print("\n===== WELCOME =====")
+            print("1. Signup")
+            print("2. Login")
+            print("0. Exit")
+            
             choice = input("Enter choice: ")
-
+            
             if choice == '1':
                 self.signup_user()
             elif choice == '2':
-                self.login()
-            elif choice == '3':
-                self.view_user()
-            elif choice == '4':
-                self.update_user()
-            elif choice == '5':
-                self.create_namespace()
-            elif choice == '6':
-                self.add_user_to_namespace()
-            elif choice == '7':
-                self.add_project_to_namespace()
-            elif choice == '8':
-                self.add_task_to_project()
-            elif choice == '9':
-                self.assign_user_to_task()
-            elif choice == '10':
-                self.add_comment_to_task()
-            elif choice == '11':
-                self.view_namespace()
-            elif choice == '12':
-                self.view_project()
-            elif choice == '13':
-                self.logout()
+                if self.login():
+                    self.main_menu()
             elif choice == '0':
                 print("Exiting...")
+                break
+            else:
+                print("Invalid choice!")
+
+    def main_menu(self):
+        while True:
+            print("\n===== MAIN MENU =====")
+            print("1. View User")
+            print("2. Update User")
+            print("3. Create Namespace")
+            print("4. Add User to Namespace")
+            print("5. Add Project to Namespace")
+            print("6. Add Task to Project")
+            print("7. Assign User to Task")
+            print("8. Add Comment to Task")
+            print("9. View Namespaces")
+            print("10. View Projects")
+            print("11. View User Comments")
+            print("12. View User Projects")
+            print("13. Change Task Status")
+            print("14. Show Tasks")
+            print("15. Logout")
+            
+            choice = input("Enter choice: ")
+            
+            if choice == '1':
+                self.view_user()
+            elif choice == '2':
+                self.update_user()
+            elif choice == '3':
+                self.create_namespace()
+            elif choice == '4':
+                self.add_user_to_namespace()
+            elif choice == '5':
+                self.add_project_to_namespace()
+            elif choice == '6':
+                self.add_task_to_project()
+            elif choice == '7':
+                self.assign_user_to_task()
+            elif choice == '8':
+                self.add_comment_to_task()
+            elif choice == '9':
+                self.view_namespace()
+            elif choice == '10':
+                self.view_project()
+            elif choice == '11':
+                self.view_user_comments()
+            elif choice == '12':
+                self.view_user_projects()
+            elif choice == '13':
+                self.change_task_status()
+            elif choice == '14':
+                self.show_tasks()
+            elif choice == '15':
+                print("Logging out...")
                 break
             else:
                 print("Invalid choice!")

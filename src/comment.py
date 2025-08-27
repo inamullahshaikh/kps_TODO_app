@@ -33,11 +33,4 @@ class Comment:
         self._text = text
 
     def __str__(self):
-        username = getattr(self._user, 'username', str(self._user))
-        task_name = getattr(self._task, 'name', str(self._task))
-        return f"Comment: {self._text}\nUser: {username}\nTask: {task_name}"
-
-    def __repr__(self):
-        username = getattr(self._user, 'username', str(self._user))
-        task_name = getattr(self._task, 'name', str(self._task))
-        return f"<Comment(user='{username}', task='{task_name}', text='{self._text[:20]}...')>"
+        return f"Comment: {self._text}\nUser: {self.user.username}\nTask: {self.task.name}"

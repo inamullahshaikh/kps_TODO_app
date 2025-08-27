@@ -70,7 +70,7 @@ class Namespace:
         users_info = ", ".join([user.username for user in self._users]) if self._users else "No users"
         return (
             f"Namespace(ID: {self._id}, Name: {self._name})\n"
-            f"Creator: {getattr(self._creator, 'username', str(self._creator))}\n"
+            f"Creator: {self.creator.username}\n"
             f"Projects ({len(self._projects)}):\n{projects_info}\n"
             f"Users ({len(self._users)}): {users_info}"
         )
