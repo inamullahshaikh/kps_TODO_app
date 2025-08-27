@@ -4,7 +4,14 @@ from .namespace import Namespace
 class Project:
     ID = 100000
 
-    def __init__(self, name, due_date, namespace: Namespace):
+    def __init__(self, name: str, due_date: datetime.date, namespace: Namespace):
+        if not isinstance(name, str):
+            raise ValueError("Project name must be a string")
+        if not isinstance(due_date, (datetime.date, datetime.datetime)):
+            raise ValueError("Due date must be a datetime.date or datetime.datetime object")
+        if not isinstance(namespace, Namespace):
+            raise ValueError("Namespace must be an instance of Namespace class")
+
         self._name = name
         self._due_date = due_date
         self._project_id = Project.ID
@@ -13,61 +20,67 @@ class Project:
         self._namespace = namespace
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         if not isinstance(value, str):
             raise ValueError("Project name must be a string")
         self._name = value
 
     @property
-    def due_date(self):
+    def due_date(self) -> datetime.date:
         return self._due_date
 
     @due_date.setter
-    def due_date(self, value):
-        if not isinstance(value, datetime.date):
-            raise ValueError("Not in date format(YYYY-MM-DD)")
+    def due_date(self, value: datetime.date):
+        if not isinstance(value, (datetime.date, datetime.datetime)):
+            raise ValueError("Due date must be a datetime.date or datetime.datetime object")
         self._due_date = value
 
     @property
-    def project_id(self):
+    def project_id(self) -> int:
         return self._project_id
 
     @property
-    def tasks(self):
-        return self._tasks
+    def tasks(self) -> list:
+        return self._tasks.copy()  
+    
+    def add_task(self, task) -> bool:
+        if task not in self._tasks:
+            self._tasks.append(task)
+            return True
+        return False
 
-    @tasks.setter
-    def tasks(self, value):
-        if not isinstance(value, list):
-            raise ValueError("Tasks must be a list")
-        self._tasks = value
+    def remove_task(self, task) -> bool:
+        if task in self._tasks:
+            self._tasks.remove(task)
+            return True
+        return False
 
     @property
-    def namespace(self):
+    def namespace(self) -> Namespace:
         return self._namespace
 
     @namespace.setter
-    def namespace(self, value):
+    def namespace(self, value: Namespace):
         if not isinstance(value, Namespace):
             raise ValueError("Namespace must be an instance of Namespace class")
         self._namespace = value
 
-    def add_task(self, task):
-        self._tasks.append(task)
-    def remove_task(self, task):
-        self._tasks.remove(task)
+    def __str__(self) -> str:
+        tasks_list = "\n".join([str(task) for task in self._tasks]) if self._tasks else "No tasks assigned"
+        return (
+            f"Project ID: {self._project_id}\n"
+            f"Name: {self._name}\n"
+            f"Due Date: {self._due_date}\n"
+            f"Namespace: {self._namespace.name}\n"
+            f"Tasks ({len(self._tasks)}):\n{tasks_list}"
+        )
 
-    def __str__(self):
-        s = f"Project ID: {self._project_id}, Name: {self._name}, Due Date: {self._due_date}\nNamespace: {self._namespace.name}\nTasks: {len(self._tasks)}"
-        for task in self._tasks:
-            s += f"\n{task}"
-        s += "\n"
-        return s
-
-    def __del__(self):
-        print(f"Deleting Project '{self._name}' (ID: {self._project_id}) → Clearing all tasks")
-        self._tasks.clear()
+    def __repr__(self):
+        return (
+            f"<Project(id={self._project_id}, name='{self._name}', due_date='{self._due_date}', "
+            f"namespace='{self._namespace.name}', tasks={len(self._tasks)})>"
+        )

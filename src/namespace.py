@@ -2,8 +2,10 @@ class Namespace:
     ID = 100000
 
     def __init__(self, name, creator):
+        if not isinstance(name, str):
+            raise ValueError("Namespace name must be a string")
         self._name = name
-        self._creator = creator
+        self._creator = creator 
         self._projects = []
         self._users = []
         self._id = Namespace.ID
@@ -25,54 +27,56 @@ class Namespace:
 
     @creator.setter
     def creator(self, value):
-        self._creator = value
+        self._creator = value 
 
     @property
     def projects(self):
-        return self._projects
-
-    @projects.setter
-    def projects(self, value):
-        if not isinstance(value, list):
-            raise ValueError("Projects must be a list")
-        self._projects = value
+        return self._projects.copy()
 
     @property
     def users(self):
-        return self._users
-
-    @users.setter
-    def users(self, value):
-        if not isinstance(value, list):
-            raise ValueError("Users must be a list")
-        self._users = value
+        return self._users.copy()
 
     @property
     def id(self):
         return self._id
 
     def add_project(self, project):
-        self._projects.append(project)
+        if project not in self._projects:
+            self._projects.append(project)
+            return True
+        return False
 
     def add_user(self, user):
-        self._users.append(user)
+        if user not in self._users:
+            self._users.append(user)
+            return True
+        return False
 
     def remove_project(self, project):
-        self._projects.remove(project)
+        if project in self._projects:
+            self._projects.remove(project)
+            return True
+        return False
 
     def remove_user(self, user):
-        self._users.remove(user)
+        if user in self._users:
+            self._users.remove(user)
+            return True
+        return False
 
     def __str__(self):
-        s = f"Namespace(ID: {self._id}, Name: {self._name}\nCreator:\n {self._creator.name}\nProjects: {len(self.projects)}\n"
-        for pro in self.projects:
-            s += f"{pro}"
+        projects_info = "\n".join([f"- {proj.name}" for proj in self._projects]) if self._projects else "No projects"
+        users_info = ", ".join([user.username for user in self._users]) if self._users else "No users"
+        return (
+            f"Namespace(ID: {self._id}, Name: {self._name})\n"
+            f"Creator: {getattr(self._creator, 'username', str(self._creator))}\n"
+            f"Projects ({len(self._projects)}):\n{projects_info}\n"
+            f"Users ({len(self._users)}): {users_info}"
+        )
 
-        s += f"\nUsers: {len(self._users)}\n"
-        for user in self._users:
-            s += f"{user.username}"
-        return s
-
-    def __del__(self):
-        print(f"Deleting Namespace '{self._name}' (ID: {self._id}) → Deleting all projects")
-        self._projects.clear()
+    def __repr__(self):
+        return (
+            f"<Namespace(id={self._id}, name='{self._name}', creator='{getattr(self._creator, 'username', str(self._creator))}', "
+            f"projects={len(self._projects)}, users={len(self._users)})>"
+        )
