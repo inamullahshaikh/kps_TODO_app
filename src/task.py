@@ -132,6 +132,6 @@ class Task:
 
     def __repr__(self):
         return (
-            f"<Task(id={self._id}, name='{self._name}', project='{self._project}', "
+            f"<Task(id={self._id}, name='{self._name}', project='{self._project.name}', "
             f"due_date='{self._due_date}', status='{self._status.status}', users={len(self._users)}, comments={len(self._comments)})>"
         )

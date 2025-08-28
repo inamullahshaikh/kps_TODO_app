@@ -446,7 +446,7 @@ class App:
 
     def show_tasks(self):
         print("\n--- SHOW TASKS ---")
-        print("1. By Namespace\n2. By Project\n3. Missed Tasks")
+        print("1. By Namespace\n2. By Project\n3. Missed Tasks\n4. All Tasks")
         choice = input("Choose option: ")
 
         namespaces = self._users[self._logged_in_user].get_namespaces()
@@ -471,7 +471,9 @@ class App:
                     for task in proj.tasks:
                         if task.due_date < today and task.status != "Completed":
                             tasks.append(task)
-
+        elif choice == '4':
+            tasks = self._users[self._logged_in_user].get_tasks()
+            print(tasks)
         if not tasks:
             print("No tasks found.")
             return
