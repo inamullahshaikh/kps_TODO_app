@@ -301,60 +301,37 @@ class App:
             return
 
         task.add_user(user)
+        user.add_task(task)
         print(f"User '{username}' assigned to task '{task.name}'.")
 
     def add_comment_to_task(self):
-        namespaces = self._users[self._logged_in_user].get_namespaces()
-        if not namespaces:
-            print("You have no namespaces.")
+        user = self._users[self._logged_in_user]
+        tasks = user.get_tasks()
+        if not tasks:
+            print("You have no tasks assigned.")
             return
 
-        print("Namespaces:")
-        for ns in namespaces:
-            print(f"ID: {ns.id}, Name: {ns.name}")
+        print("\nYour Tasks:")
+        for t in tasks:
+            print(f"ID: {t.id}, Name: {t.name}, Status: {t.status}")
 
-        ns_id = int(input("Enter namespace ID: "))
-        ns = next((n for n in namespaces if n.id == ns_id), None)
-        if not ns:
-            print("Namespace not found.")
+        try:
+            task_id = int(input("\nEnter Task ID to add a comment: "))
+        except ValueError:
+            print("Invalid input. Please enter a numeric Task ID.")
             return
-
-        if not ns.projects:
-            print("No projects in this namespace.")
-            return
-
-        print("Projects:")
-        for proj in ns.projects:
-            print(f"ID: {proj.project_id}, Name: {proj.name}")
-
-        proj_id = int(input("Enter project ID: "))
-        proj = next((p for p in ns.projects if p.project_id == proj_id), None)
-        if not proj:
-            print("Project not found.")
-            return
-
-        if not proj.tasks:
-            print("No tasks in this project.")
-            return
-
-        print("Tasks:")
-        for t in proj.tasks:
-            print(f"Name: {t.name}, ID: {t.id}")
-
-        task_id = int(input("Enter Task ID: "))
-        task = next((t for t in proj.tasks if t.id == task_id), None)
+        task = next((t for t in tasks if t.id == task_id), None)
         if not task:
             print("Task not found.")
             return
-
-        if self._users[self._logged_in_user] not in task.users:
-            print("You are not assigned to this task.")
+        comment_text = input("Enter your comment: ").strip()
+        if not comment_text:
+            print("Comment cannot be empty.")
             return
 
-        comment_text = input("Enter your comment: ")
-        comment = Comment(self._users[self._logged_in_user], task, comment_text)
-        self._users[self._logged_in_user].add_comment(comment)
-        print("Comment added successfully!")
+        task.add_comment(user, comment_text)
+        user.add_comment(Comment(user, task, comment_text))
+        print(f"Comment added successfully: {comment_text}")
 
     def view_namespace(self):
         namespaces = self._users[self._logged_in_user].get_namespaces()
@@ -388,9 +365,15 @@ class App:
 
         for proj in ns.projects:
             print(proj)
+
     def view_user_comments(self):
         user = self._users.get(self._logged_in_user)
-        if not user or not user.get_comments():
+        if not user:
+            print("User not found.")
+            return
+
+        comments = user.get_comments()
+        if not comments:
             print("No comments found.")
             return
 
@@ -398,21 +381,58 @@ class App:
         print("1. All\n2. By Namespace\n3. By Project\n4. By Task")
         choice = input("Choose option: ")
 
-        comments = user.get_comments()
         if choice == '1':
             for c in comments:
                 print(c)
         elif choice in ['2', '3', '4']:
-            keyword = input("Enter name to filter: ")
+            keyword = input("Enter name to filter: ").strip()
+            filtered = []
             for c in comments:
-                if (choice == '2' and keyword in c.task.project) or \
-                (choice == '3' and keyword == c.task.project) or \
-                (choice == '4' and keyword == c.task.name):
+                if choice == '2':  # By Namespace
+                    if hasattr(c.task.project,
+                               "namespace") and keyword.lower() in c.task.project.namespace.name.lower():
+                        filtered.append(c)
+                elif choice == '3':  # By Project
+                    if keyword.lower() in c.task.project.name.lower():
+                        filtered.append(c)
+                elif choice == '4':  # By Task
+                    if keyword.lower() in c.task.name.lower():
+                        filtered.append(c)
+
+            if filtered:
+                for c in filtered:
                     print(c)
+            else:
+                print("No matching comments found.")
+        else:
+            print("Invalid option.")
+
     def change_task_status(self):
-        task = self._select_task()
-        if not task:
+        user = self._users.get(self._logged_in_user)
+        if not user:
+            print("User not found.")
             return
+
+        tasks = user.get_tasks()
+        if not tasks:
+            print("You have no tasks assigned.")
+            return
+
+        print("\nYour Tasks:")
+        for t in tasks:
+            print(f"ID: {t.id}, Name: {t.name}, Current Status: {t.status}")
+
+        try:
+            task_id = int(input("\nEnter Task ID to change status: "))
+        except ValueError:
+            print("Invalid input. Please enter a numeric Task ID.")
+            return
+
+        task = next((t for t in tasks if t.id == task_id), None)
+        if not task:
+            print("Task not found.")
+            return
+
         current_status = task.status
         if current_status == "To Do":
             task.update_status("In Progress")
@@ -420,6 +440,8 @@ class App:
             task.update_status("Completed")
         else:
             print("Task already completed.")
+            return
+
         print(f"Task status updated to {task.status}.")
 
     def show_tasks(self):

@@ -1,8 +1,10 @@
 from .status import Status  # Assuming Status class is in status.py
+from .comment import Comment
 
 class Task:
     PRIORITIES = ["Low", "Medium", "High"]
     ID = 100000
+
     def __init__(self, name, creator, project, due_date, description, status=None, priority="Medium"):
         self._name = name
         self._creator = creator
@@ -10,6 +12,7 @@ class Task:
         self._due_date = due_date
         self._description = description
         self._users = []
+        self._comments = []  # List of Comment objects
         self._id = Task.ID
         Task.ID += 1
         self._status = Status(status) if status else Status()
@@ -23,7 +26,6 @@ class Task:
     def priority(self, value):
         if value in Task.PRIORITIES:
             self._priority = value
-
 
     @property
     def id(self):
@@ -92,6 +94,27 @@ class Task:
     def update_status(self, new_status):
         self._status.update_status(new_status)
 
+    @property
+    def comments(self):
+        return self._comments.copy()
+
+    def add_comment(self, user, text):
+        new_comment = Comment(user, self, text)
+        self._comments.append(new_comment)
+        return new_comment
+
+    def remove_comment(self, comment):
+        if comment in self._comments:
+            self._comments.remove(comment)
+            return True
+        return False
+
+    def list_comments(self):
+        if not self._comments:
+            return "No comments yet."
+        return "\n".join([f"- {c.user.username}: {c.text}" for c in self._comments])
+
+    # --- String Representation ---
     def __str__(self):
         users_list = ", ".join([user.username for user in self._users]) if self._users else "None"
         return (
@@ -102,11 +125,13 @@ class Task:
             f"Due Date: {self._due_date}\n"
             f"Description: {self._description}\n"
             f"Status: {self._status.status}\n"
-            f"Assigned Users: {users_list}"
+            f"Priority: {self._priority}\n"
+            f"Assigned Users: {users_list}\n"
+            f"Comments:\n{self.list_comments()}"
         )
 
     def __repr__(self):
         return (
             f"<Task(id={self._id}, name='{self._name}', project='{self._project}', "
-            f"due_date='{self._due_date}', status='{self._status.status}', users={len(self._users)})>"
+            f"due_date='{self._due_date}', status='{self._status.status}', users={len(self._users)}, comments={len(self._comments)})>"
         )

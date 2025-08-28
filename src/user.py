@@ -64,7 +64,8 @@ class User(Person):
             self._tasks.remove(task)
             return True
         return False
-
+    def get_tasks(self):
+        return self._tasks.copy()
     def login(self, username, password):
         if self._logged_in:
             return "Already logged in."
